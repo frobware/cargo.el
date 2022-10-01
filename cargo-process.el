@@ -64,19 +64,13 @@
   :prefix "cargo-process-"
   :group 'cargo)
 
-(defcustom cargo-process--custom-path-to-bin
-  (or (executable-find "cargo")
-      (expand-file-name "cargo" "~/.cargo/bin")
-      "/usr/local/bin/cargo")
-  "Custom path to the cargo executable"
-  :type 'file)
+(defun cargo-process--custom-path-to-bin ()
+  "Returns the path to the cargo executable"
+  (executable-find "cargo"))
 
-(defcustom cargo-process--rustc-cmd
-  (or (executable-find "rustc")
-      (expand-file-name "rustc" "~/.cargo/bin")
-      "/usr/local/bin/rustc")
-  "Custom path to the rustc executable"
-  :type 'file)
+(defun cargo-process--rustc-cmd ()
+  "Returns the path to the rustc executable"
+  (executable-find "rustc"))
 
 (defcustom cargo-process--enable-rust-backtrace nil
   "Set RUST_BACKTRACE environment variable to 1 for tasks test and run"
@@ -342,7 +336,7 @@ If FILE-NAME is not a TRAMP file, return it unmodified."
   "Find the workspace root using `cargo metadata`."
   (when (cargo-process--project-root)
     (let* ((metadata-text (shell-command-to-string
-                           (concat (shell-quote-argument cargo-process--custom-path-to-bin)
+                           (concat (shell-quote-argument (cargo-process--custom-path-to-bin))
                                    " metadata --format-version 1 --no-deps")))
            (metadata-json (cargo-json-read-from-string metadata-text))
            (tramp-prefix (cargo-process--tramp-file-name-prefix (cargo-process--project-root)))
@@ -355,7 +349,7 @@ If FILE-NAME is not a TRAMP file, return it unmodified."
   (when (cargo-process--project-root)
     (let ((metadata-text
            (shell-command-to-string
-            (concat (shell-quote-argument cargo-process--custom-path-to-bin)
+            (concat (shell-quote-argument (cargo-process--custom-path-to-bin))
                     " metadata --format-version 1"))))
       (cargo-json-read-from-string metadata-text))))
 
@@ -376,7 +370,7 @@ Returns the created process."
           (or last-cmd
               (cargo-process--maybe-read-command
                (cargo-process--augment-cmd-for-os opens-external
-                                                  (mapconcat #'identity (list (shell-quote-argument cargo-process--custom-path-to-bin)
+                                                  (mapconcat #'identity (list (shell-quote-argument (cargo-process--custom-path-to-bin))
                                                                               command
                                                                               (manifest-path-argument name)
                                                                               cargo-process--command-flags
@@ -410,7 +404,7 @@ Returns the created process."
        (let ((buffer-read-only nil))
          (erase-buffer)
          (insert (shell-command-to-string
-                  (concat cargo-process--rustc-cmd " --explain=" errno))))
+                  (concat (cargo-process--rustc-cmd) " --explain=" errno))))
        (markdown-view-mode)
        (setq-local markdown-fontify-code-blocks-natively t)
        (setq-local markdown-fontify-code-block-default-mode 'rust-mode)
